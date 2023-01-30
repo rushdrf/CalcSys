@@ -51,7 +51,7 @@ namespace RemoteCodingTest
                 }
             }
         }
-        public static double Calculate(string sum)
+        public static double? Calculate(string sum)
         {
             //var calculations = new List<Calculation>();
             var splitSum = sum.Split(' ');
@@ -73,7 +73,7 @@ namespace RemoteCodingTest
             }
             var answer = runCalculate(calcs);
 
-            return 0;
+            return answer;
         }
 
         public static void toSleep(int? millisec = null)
@@ -159,35 +159,45 @@ namespace RemoteCodingTest
 
         public static double? runCalculate(List<object> inputCalc)
         {
-            if (inputCalc.Contains("(") && inputCalc.Contains(")"))
+            double result = 0;
+            var calculations = inputCalc;
+            foreach (var calculation in calculations)
             {
-
-            }
-            else
-            {
-                double result;
-                foreach (object inputCalcItem in inputCalc)
+                if (calculation.ToString() == "(")
                 {
-                    result = inputCalcItem.GetType().Name == "Double" ? inputCalcItem
+                    
                 }
             }
-            //switch (oper)
-            //{
-            //    case "+":
-            //        return x + y;
-            //    case "-":
-            //        return x - y;
-            //    case "*":
-            //        return x * y;
-            //    case "/":
-            //        return x / y;
-            //}
-            return null;
 
+
+            //if (inputCalcItem.ToString() == "*")
+            //{
+            //    result = result == 0
+            //        ? Convert.ToDouble(inputCalc[numberIndex - 1]) * Convert.ToDouble(inputCalc[numberIndex + 1])
+            //        : result + (Convert.ToDouble(inputCalc[numberIndex - 1]) * Convert.ToDouble(inputCalc[numberIndex + 1]));
+            //}
+            //else if (inputCalcItem.ToString() == "/")
+            //{
+            //    result = result == 0
+            //        ? Convert.ToDouble(inputCalc[numberIndex - 1]) / Convert.ToDouble(inputCalc[numberIndex + 1])
+            //        : result + (Convert.ToDouble(inputCalc[numberIndex - 1]) / Convert.ToDouble(inputCalc[numberIndex + 1]));
+            //}
+
+            return null;
         }
-        public string[] Bodmas()
+
+        public static string[] Bodmas()
         {
             return new string[] { "*", "/" };
+        }
+
+        public static string[] otherOperator()
+        {
+            return new string[] { "+", "-" };
+        }
+        public static string[] Parentheses()
+        {
+            return new string[] { "(", ")" };
         }
     }
 }
