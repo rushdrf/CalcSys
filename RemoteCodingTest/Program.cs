@@ -1,5 +1,6 @@
 ﻿using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 
 namespace RemoteCodingTest
 {
@@ -160,14 +161,29 @@ namespace RemoteCodingTest
         public static double? runCalculate(List<object> inputCalc)
         {
             double result = 0;
-            var calculations = inputCalc;
-            foreach (var calculation in calculations)
+
+            var countOpenBracket = inputCalc.FindAll(x => x.ToString() == "(").Count();
+            var countCloseBracket = inputCalc.FindAll(x => x.ToString() == ")").Count();
+
+            if (countOpenBracket == countCloseBracket)
             {
-                if (calculation.ToString() == "(")
+                int OpenBracketStartIndex = 0;
+                int CloseBracketStartIndex = 0;
+                int[] OpenBracketIndexes = new int[countOpenBracket];
+                int[] CloseBracketIndexes = new int[countCloseBracket];
+                for (int i = 0; i < countCloseBracket; i++)
                 {
-                    
+                    OpenBracketStartIndex = inputCalc.FindIndex(OpenBracketStartIndex, x => x.ToString() == "(");
+                    CloseBracketStartIndex = inputCalc.FindIndex(CloseBracketStartIndex, x => x.ToString() == ")");
+                    OpenBracketIndexes[i] = OpenBracketStartIndex;
+                    CloseBracketIndexes[i] = CloseBracketStartIndex;
+
+                    OpenBracketStartIndex++;
+                    CloseBracketStartIndex++;
                 }
+                PairParentheses(OpenBracketIndexes, CloseBracketIndexes);
             }
+
 
 
             //if (inputCalcItem.ToString() == "*")
@@ -198,6 +214,20 @@ namespace RemoteCodingTest
         public static string[] Parentheses()
         {
             return new string[] { "(", ")" };
+        }
+        public static List<int[]> PairParentheses(int[] OpenBracketIndexes, int[] CloseBracketIndexes)
+        {
+            var pairParentheses = new List<int[]>();
+
+            foreach (int openBracket in OpenBracketIndexes)
+            {
+                foreach (int closeBracket in CloseBracketIndexes)
+                {
+
+                }
+            }
+
+            return null;
         }
     }
 }
