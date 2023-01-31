@@ -1,8 +1,4 @@
-﻿using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-
-namespace RemoteCodingTest
+﻿namespace RemoteCodingTest
 {
     public class Program
     {
@@ -27,7 +23,7 @@ namespace RemoteCodingTest
                     continue;
                 else
                 {
-                    Console.WriteLine("The answer for " + inputCalc + ": " + Calculate(inputCalc));
+                    Console.WriteLine("The answer for " + inputCalc + " = " + Calculate(inputCalc));
                     toSleep(1500);
 
                 TryAgain:
@@ -52,27 +48,39 @@ namespace RemoteCodingTest
                 }
             }
         }
+
         public static double? Calculate(string sum)
         {
-            //var calculations = new List<Calculation>();
-            var splitSum = sum.Split(' ');
-            List<object> calcs = new List<object>();
-            for (int i = 0; i < splitSum.Length; i++)
+            sum = sum.Trim();
+            var noSpacesSum = sum.Replace(" ","");
+
+            double answer = 0;
+            int startIndexOpenBrac = 0;
+            int startIndexCloseBrac = 0;
+
+            while(startIndexOpenBrac != -1 || startIndexCloseBrac != -1)
             {
-                //if (Identity(splitSum[i], out string? output, out string? dataType))
-                //{
-                //    calculations.Add(new Calculation { Index = i, Value = output, DataType = dataType });
-                //}
-                if (double.TryParse(splitSum[i], out double output))
+                startIndexOpenBrac = noSpacesSum.IndexOf("(");
+                startIndexCloseBrac = noSpacesSum.IndexOf(")");
+                if (startIndexOpenBrac == -1 || startIndexCloseBrac == -1)
+                    break;
+                else
                 {
-                    calcs.Add(output);
-                }
-                else 
-                {
-                    calcs.Add(splitSum[i]);
+                    var subCalc = noSpacesSum.Substring(startIndexOpenBrac, startIndexCloseBrac - startIndexOpenBrac + 1);
+
+                    if (subCalc.Where(x => Parentheses().Contains(x.ToString())).Count() > 2)
+                    {
+
+                    }
+                    else
+                    {
+                        answer = answer + runCalculate(subCalc);
+                        noSpacesSum = noSpacesSum.Substring(0, startIndexOpenBrac) + answer.ToString() + noSpacesSum.Substring(startIndexCloseBrac + 1);
+                    }
                 }
             }
-            var answer = runCalculate(calcs);
+
+            answer = runCalculate(noSpacesSum);
 
             return answer;
         }
@@ -131,7 +139,7 @@ namespace RemoteCodingTest
             }
         }
 
-        public static bool CheckOperator(string oper, out string? operOut, out string? operType)
+        public static bool CheckOperator(string? oper, out string? operOut, out string? operType)
         {
             switch (oper)
             {
@@ -158,76 +166,204 @@ namespace RemoteCodingTest
             }
         }
 
-        public static double? runCalculate(List<object> inputCalc)
+        public static double runCalculate(string subCalc)
         {
             double result = 0;
+            var val = subCalc.Replace("(","").Replace(")","");
 
-            var countOpenBracket = inputCalc.FindAll(x => x.ToString() == "(").Count();
-            var countCloseBracket = inputCalc.FindAll(x => x.ToString() == ")").Count();
-
-            if (countOpenBracket == countCloseBracket)
+            val = BodmasSorting(val);
+            
+            if (val.Length == 3)
             {
-                int OpenBracketStartIndex = 0;
-                int CloseBracketStartIndex = 0;
-                int[] OpenBracketIndexes = new int[countOpenBracket];
-                int[] CloseBracketIndexes = new int[countCloseBracket];
-                for (int i = 0; i < countCloseBracket; i++)
+                string oper = val[1].ToString();
+                double a = Convert.ToDouble(val[0].ToString());
+                double b = Convert.ToDouble(val[2].ToString());
+                if (oper.Equals("+"))
                 {
-                    OpenBracketStartIndex = inputCalc.FindIndex(OpenBracketStartIndex, x => x.ToString() == "(");
-                    CloseBracketStartIndex = inputCalc.FindIndex(CloseBracketStartIndex, x => x.ToString() == ")");
-                    OpenBracketIndexes[i] = OpenBracketStartIndex;
-                    CloseBracketIndexes[i] = CloseBracketStartIndex;
-
-                    OpenBracketStartIndex++;
-                    CloseBracketStartIndex++;
+                    result = a + b;
                 }
-                PairParentheses(OpenBracketIndexes, CloseBracketIndexes);
+                else if (oper.Equals("-"))
+                {
+                    result = a - b;
+                }
+                else if (oper.Equals("*"))
+                {
+                    result = a * b;
+                }
+                else if (oper.Equals("/"))
+                {
+                    result = a / b;
+                }
+                else
+                    throw new Exception("Operator not found");
             }
+            else if (val.Length == 5)
+            {
+                string oper = val[1].ToString();
+                string oper2 = val[3].ToString();
+                double subResult = 0;
+                double a = Convert.ToDouble(val[0].ToString());
+                double b = Convert.ToDouble(val[2].ToString());
+                double c = Convert.ToDouble(val[4].ToString());
+                if (oper.Equals("+"))
+                {
+                    subResult = a + b;
+                }
+                else if (oper.Equals("-"))
+                {
+                    subResult = a - b;
+                }
+                else if (oper.Equals("*"))
+                {
+                    subResult = a * b;
+                }
+                else if (oper.Equals("/"))
+                {
+                    subResult = a / b;
+                }
+                else
+                    throw new Exception("Operator not found");
 
+                if (oper2.Equals("+"))
+                {
+                    result = subResult + c;
+                }
+                else if (oper2.Equals("-"))
+                {
+                    result = subResult - c;
+                }
+                else if (oper2.Equals("*"))
+                {
+                    result = subResult * c;
+                }
+                else if (oper2.Equals("/"))
+                {
+                    result = subResult / c;
+                }
+                else
+                    throw new Exception("Operator not found");
+            }
+            else if (val.Length == 7)
+            {
+                string oper = val[1].ToString();
+                string oper2 = val[3].ToString();
+                string oper3 = val[5].ToString();
+                double subResult = 0;
+                double a = Convert.ToDouble(val[0].ToString());
+                double b = Convert.ToDouble(val[2].ToString());
+                double c = Convert.ToDouble(val[4].ToString());
+                double d = Convert.ToDouble(val[6].ToString());
+                if (oper.Equals("+"))
+                {
+                    subResult = a + b;
+                }
+                else if (oper.Equals("-"))
+                {
+                    subResult = a - b;
+                }
+                else if (oper.Equals("*"))
+                {
+                    subResult = a * b;
+                }
+                else if (oper.Equals("/"))
+                {
+                    subResult = a / b;
+                }
+                else
+                    throw new Exception("Operator not found");
 
+                if (oper2.Equals("+"))
+                {
+                    subResult += c;
+                }
+                else if (oper2.Equals("-"))
+                {
+                    subResult -= c;
+                }
+                else if (oper2.Equals("*"))
+                {
+                    subResult *= c;
+                }
+                else if (oper2.Equals("/"))
+                {
+                    subResult /= c;
+                }
+                else
+                    throw new Exception("Operator not found");
 
-            //if (inputCalcItem.ToString() == "*")
-            //{
-            //    result = result == 0
-            //        ? Convert.ToDouble(inputCalc[numberIndex - 1]) * Convert.ToDouble(inputCalc[numberIndex + 1])
-            //        : result + (Convert.ToDouble(inputCalc[numberIndex - 1]) * Convert.ToDouble(inputCalc[numberIndex + 1]));
-            //}
-            //else if (inputCalcItem.ToString() == "/")
-            //{
-            //    result = result == 0
-            //        ? Convert.ToDouble(inputCalc[numberIndex - 1]) / Convert.ToDouble(inputCalc[numberIndex + 1])
-            //        : result + (Convert.ToDouble(inputCalc[numberIndex - 1]) / Convert.ToDouble(inputCalc[numberIndex + 1]));
-            //}
-
-            return null;
+                if (oper3.Equals("+"))
+                {
+                    result = subResult + d;
+                }
+                else if (oper3.Equals("-"))
+                {
+                    result = subResult - d;
+                }
+                else if (oper3.Equals("*"))
+                {
+                    result = subResult * d;
+                }
+                else if (oper3.Equals("/"))
+                {
+                    result = subResult / d;
+                }
+                else
+                    throw new Exception("Operator not found");
+            }
+            return result;
         }
 
-        public static string[] Bodmas()
+        public static string BodmasSorting(string val)
         {
-            return new string[] { "*", "/" };
-        }
-
-        public static string[] otherOperator()
-        {
-            return new string[] { "+", "-" };
+            if (val.Contains("*") || val.Contains("/"))
+            {
+                int startIndexOfMultiply = 0;
+                int startIndexOfDivision = 0;
+                while (startIndexOfMultiply != -1 || startIndexOfDivision != -1)
+                {
+                    startIndexOfMultiply = val.IndexOf("*");
+                    startIndexOfDivision = val.IndexOf("/");
+                    if (startIndexOfMultiply == -1 && startIndexOfDivision == -1)
+                        break;
+                    else
+                    {
+                        if (startIndexOfMultiply != -1 && startIndexOfDivision != -1)
+                        {
+                            if (startIndexOfMultiply < startIndexOfDivision)
+                            {
+                                val = val.Substring(startIndexOfMultiply - 1, startIndexOfMultiply + 1) + val.Substring(0, startIndexOfMultiply - 1) + val.Substring(startIndexOfMultiply + 2);
+                            }
+                            else if (startIndexOfMultiply > startIndexOfDivision)
+                            {
+                                val = val.Substring(startIndexOfDivision - 1, startIndexOfDivision + 1) + val.Substring(0, startIndexOfDivision - 1) + val.Substring(startIndexOfDivision + 2);
+                            }
+                            else
+                            {
+                                val = val;
+                            }
+                        }
+                        else if (startIndexOfMultiply != -1)
+                        {
+                            val = val.Substring(startIndexOfMultiply - 1, startIndexOfMultiply + 1) + val.Substring(0, startIndexOfMultiply - 1);
+                        }
+                        else if (startIndexOfDivision != -1)
+                        {
+                            val = val.Substring(startIndexOfDivision - 1, startIndexOfDivision + 1) + val.Substring(0, startIndexOfDivision - 1);
+                        }
+                        else
+                        {
+                            val = val;
+                        }
+                    }
+                }
+                return val;
+            }
+            else
+                return val;
         }
         public static string[] Parentheses()
         {
             return new string[] { "(", ")" };
-        }
-        public static List<int[]> PairParentheses(int[] OpenBracketIndexes, int[] CloseBracketIndexes)
-        {
-            var pairParentheses = new List<int[]>();
-
-            foreach (int openBracket in OpenBracketIndexes)
-            {
-                foreach (int closeBracket in CloseBracketIndexes)
-                {
-
-                }
-            }
-
-            return null;
         }
     }
 }
