@@ -1,4 +1,7 @@
-﻿namespace RemoteCodingTest
+﻿using System.Linq;
+using System.Net.NetworkInformation;
+
+namespace RemoteCodingTest
 {
     public class Program
     {
@@ -24,7 +27,7 @@
                 else
                 {
                     Console.WriteLine("The answer for " + inputCalc + " = " + Calculate(inputCalc));
-                    toSleep(1500);
+                    toSleep();
 
                 TryAgain:
                     Console.WriteLine("Do you want to try again? y/n");
@@ -51,38 +54,56 @@
 
         public static double? Calculate(string sum)
         {
-            sum = sum.Trim();
-            var noSpacesSum = sum.Replace(" ","");
-
-            double answer = 0;
-            int startIndexOpenBrac = 0;
-            int startIndexCloseBrac = 0;
-
-            while(startIndexOpenBrac != -1 || startIndexCloseBrac != -1)
+            string? newSum = null;
+            sum = sum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
+            string[]? splitSums = sum.Split("#").Where(x => !string.IsNullOrEmpty(x)).ToArray();
+            for (int a = 0; a >= 0; a++)
             {
-                startIndexOpenBrac = noSpacesSum.IndexOf("(");
-                startIndexCloseBrac = noSpacesSum.IndexOf(")");
-                if (startIndexOpenBrac == -1 || startIndexCloseBrac == -1)
-                    break;
+                if (!string.IsNullOrEmpty(newSum))
+                {
+                    splitSums = newSum.Split("#").Where(x => !string.IsNullOrEmpty(x)).ToArray();
+                    splitSums = SolveCalculation(splitSums);
+                }
                 else
                 {
-                    var subCalc = noSpacesSum.Substring(startIndexOpenBrac, startIndexCloseBrac - startIndexOpenBrac + 1);
+                    splitSums = SolveCalculation(splitSums);
+                }
 
-                    if (subCalc.Where(x => Parentheses().Contains(x.ToString())).Count() > 2)
+                newSum = string.Join("", splitSums);
+
+                if (Parentheses().Where(x => newSum.Contains(x)).Count() > 0)
+                {
+                    if (newSum.Count(x => x == '*') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
                     {
-
+                        newSum = BodmasHandler(newSum, "*");
+                        continue;
+                    }
+                    else if (newSum.Count(x => x == '/') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
+                    {
+                        newSum = BodmasHandler(newSum, "/");
+                        continue;
                     }
                     else
                     {
-                        answer = answer + runCalculate(subCalc);
-                        noSpacesSum = noSpacesSum.Substring(0, startIndexOpenBrac) + answer.ToString() + noSpacesSum.Substring(startIndexCloseBrac + 1);
+                        newSum = newSum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
+                        continue;
                     }
                 }
+                else if (newSum.Count(x => x == '*') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
+                {
+                    newSum = BodmasHandler(newSum, "*");
+                    continue;
+                }
+                else if (newSum.Count(x => x == '/') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
+                {
+                    newSum = BodmasHandler(newSum, "/");
+                    continue;
+                }
+                else
+                    break;   
             }
-
-            answer = runCalculate(noSpacesSum);
-
-            return answer;
+            var result = runCalculate(newSum);
+            return result.doubleVal;
         }
 
         public static void toSleep(int? millisec = null)
@@ -92,87 +113,11 @@
             Thread.Sleep((int)interval);
         }
 
-        public static bool Identity(string line, out string? output, out string? dataType)
-        {
-            if (double.TryParse(line, out var result))
-            {
-                output = line;
-                dataType = "Number";
-                return true;
-            }
-            else if (checkParentheses(line, out string? parentheses, out string? parenthesesType))
-            {
-                output = parentheses;
-                dataType = parenthesesType;
-                return true;
-            }
-            else if (CheckOperator(line, out string? operOut, out string? operType))
-            {
-                output = operOut;
-                dataType = operType;
-                return true;
-            }
-            else
-            {
-                output = null;
-                dataType = null;
-                return false;
-            }
-        }
-
-        public static bool checkParentheses(string line, out string? parentheses, out string? parenthesesType)
-        {
-            switch (line)
-            {
-                case "(":
-                    parentheses = "(";
-                    parenthesesType = "OpenParentheses";
-                    return true;
-                case ")":
-                    parentheses = ")";
-                    parenthesesType = "CloseParentheses";
-                    return true;
-                default:
-                    parentheses = null;
-                    parenthesesType = null;
-                    return false;
-            }
-        }
-
-        public static bool CheckOperator(string? oper, out string? operOut, out string? operType)
-        {
-            switch (oper)
-            {
-                case "+":
-                    operOut = "+";
-                    operType = "Add";
-                    return true;
-                case "-":
-                    operOut = "-";
-                    operType = "Minus";
-                    return true;
-                case "*":
-                    operOut = "*";
-                    operType = "Multiply";
-                    return true;
-                case "/":
-                    operOut = "/";
-                    operType = "Divide";
-                    return true;
-                default:
-                    operOut = null;
-                    operType = null;
-                    return false;
-            }
-        }
-
-        public static double runCalculate(string subCalc)
+        public static Calculation runCalculate(string subCalc)
         {
             double result = 0;
             var val = subCalc.Replace("(","").Replace(")","");
 
-            val = BodmasSorting(val);
-            
             if (val.Length == 3)
             {
                 string oper = val[1].ToString();
@@ -310,60 +255,47 @@
                 else
                     throw new Exception("Operator not found");
             }
-            return result;
+            return new Calculation { stringVal = result.ToString(), doubleVal = result };
         }
 
-        public static string BodmasSorting(string val)
-        {
-            if (val.Contains("*") || val.Contains("/"))
-            {
-                int startIndexOfMultiply = 0;
-                int startIndexOfDivision = 0;
-                while (startIndexOfMultiply != -1 || startIndexOfDivision != -1)
-                {
-                    startIndexOfMultiply = val.IndexOf("*");
-                    startIndexOfDivision = val.IndexOf("/");
-                    if (startIndexOfMultiply == -1 && startIndexOfDivision == -1)
-                        break;
-                    else
-                    {
-                        if (startIndexOfMultiply != -1 && startIndexOfDivision != -1)
-                        {
-                            if (startIndexOfMultiply < startIndexOfDivision)
-                            {
-                                val = val.Substring(startIndexOfMultiply - 1, startIndexOfMultiply + 1) + val.Substring(0, startIndexOfMultiply - 1) + val.Substring(startIndexOfMultiply + 2);
-                            }
-                            else if (startIndexOfMultiply > startIndexOfDivision)
-                            {
-                                val = val.Substring(startIndexOfDivision - 1, startIndexOfDivision + 1) + val.Substring(0, startIndexOfDivision - 1) + val.Substring(startIndexOfDivision + 2);
-                            }
-                            else
-                            {
-                                val = val;
-                            }
-                        }
-                        else if (startIndexOfMultiply != -1)
-                        {
-                            val = val.Substring(startIndexOfMultiply - 1, startIndexOfMultiply + 1) + val.Substring(0, startIndexOfMultiply - 1);
-                        }
-                        else if (startIndexOfDivision != -1)
-                        {
-                            val = val.Substring(startIndexOfDivision - 1, startIndexOfDivision + 1) + val.Substring(0, startIndexOfDivision - 1);
-                        }
-                        else
-                        {
-                            val = val;
-                        }
-                    }
-                }
-                return val;
-            }
-            else
-                return val;
-        }
         public static string[] Parentheses()
         {
             return new string[] { "(", ")" };
         }
+
+        public static string[] SolveCalculation(string[] splitSums)
+        {
+            for (int i = 0; i < splitSums.Length; i++)
+            {
+                if (Parentheses().Where(x => splitSums[i].Contains(x)).Count() == 2)
+                {
+                    splitSums[i] = runCalculate(splitSums[i]).stringVal;
+                }
+            }
+            return splitSums;
+        }
+
+        public static string BodmasHandler(string newSum, string op)
+        {
+            var splitNewSum = newSum.ToCharArray().Select(x => x.ToString()).ToArray();
+
+            for (int b = 0; b < splitNewSum.Length; b++)
+            {
+                if (splitNewSum[b].Equals(op))
+                {
+                    splitNewSum[b - 1] = "(" + splitNewSum[b - 1];
+                    splitNewSum[b + 1] = splitNewSum[b + 1] + ")";
+                }
+            }
+            newSum = string.Join("", splitNewSum);
+            newSum = newSum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
+            return newSum;
+        }
+    }
+
+    public class Calculation
+    {
+        public string stringVal { get; set; }
+        public double doubleVal { get; set; }
     }
 }
