@@ -24,6 +24,16 @@ namespace RemoteCodingTest
 
                 if (string.IsNullOrWhiteSpace(inputCalc))
                     continue;
+                else if (GetOperators().Where(x => inputCalc.Contains(x)).Count() == 0)
+                {
+                    Console.WriteLine("Invalid Input");
+                    continue;
+                }
+                else if (GetUsedDelimiter().Where(x => inputCalc.Contains(x)).Count() > 0)
+                {
+                    Console.WriteLine("Please remove \"@\" and \"#\" symbols from the calculation");
+                    continue;
+                }
                 else
                 {
                     Console.WriteLine("The answer for " + inputCalc + " = " + Calculate(inputCalc));
@@ -71,7 +81,7 @@ namespace RemoteCodingTest
 
                 newSum = string.Join("", splitSums);
 
-                if (Parentheses().Where(x => newSum.Contains(x)).Count() > 0)
+                if (GetParentheses().Where(x => newSum.Contains(x)).Count() > 0)
                 {
                     if (newSum.Count(x => x == '*') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
                     {
@@ -116,13 +126,15 @@ namespace RemoteCodingTest
         public static Calculation runCalculate(string subCalc)
         {
             double result = 0;
-            var val = subCalc.Replace("(","").Replace(")","");
+            subCalc = subCalc.Replace("(", "").Replace(")", "").Replace("+", "@+@").Replace("-", "@-@").Replace("*", "@*@").Replace("/", "@/@");
+            var arrayCalc = subCalc.Split("@");
+            var calcLen = arrayCalc.Length;
 
-            if (val.Length == 3)
+            if (calcLen == 3)
             {
-                string oper = val[1].ToString();
-                double a = Convert.ToDouble(val[0].ToString());
-                double b = Convert.ToDouble(val[2].ToString());
+                string oper = arrayCalc[1];
+                double a = Convert.ToDouble(arrayCalc[0]);
+                double b = Convert.ToDouble(arrayCalc[2]);
                 if (oper.Equals("+"))
                 {
                     result = a + b;
@@ -142,14 +154,14 @@ namespace RemoteCodingTest
                 else
                     throw new Exception("Operator not found");
             }
-            else if (val.Length == 5)
+            else if (calcLen == 5)
             {
-                string oper = val[1].ToString();
-                string oper2 = val[3].ToString();
+                string oper = arrayCalc[1];
+                string oper2 = arrayCalc[3].ToString();
                 double subResult = 0;
-                double a = Convert.ToDouble(val[0].ToString());
-                double b = Convert.ToDouble(val[2].ToString());
-                double c = Convert.ToDouble(val[4].ToString());
+                double a = Convert.ToDouble(arrayCalc[0]);
+                double b = Convert.ToDouble(arrayCalc[2]);
+                double c = Convert.ToDouble(arrayCalc[4]);
                 if (oper.Equals("+"))
                 {
                     subResult = a + b;
@@ -188,16 +200,16 @@ namespace RemoteCodingTest
                 else
                     throw new Exception("Operator not found");
             }
-            else if (val.Length == 7)
+            else if (calcLen == 7)
             {
-                string oper = val[1].ToString();
-                string oper2 = val[3].ToString();
-                string oper3 = val[5].ToString();
+                string oper = arrayCalc[1];
+                string oper2 = arrayCalc[3];
+                string oper3 = arrayCalc[5];
                 double subResult = 0;
-                double a = Convert.ToDouble(val[0].ToString());
-                double b = Convert.ToDouble(val[2].ToString());
-                double c = Convert.ToDouble(val[4].ToString());
-                double d = Convert.ToDouble(val[6].ToString());
+                double a = Convert.ToDouble(arrayCalc[0]);
+                double b = Convert.ToDouble(arrayCalc[2]);
+                double c = Convert.ToDouble(arrayCalc[4]);
+                double d = Convert.ToDouble(arrayCalc[6]);
                 if (oper.Equals("+"))
                 {
                     subResult = a + b;
@@ -258,7 +270,7 @@ namespace RemoteCodingTest
             return new Calculation { stringVal = result.ToString(), doubleVal = result };
         }
 
-        public static string[] Parentheses()
+        public static string[] GetParentheses()
         {
             return new string[] { "(", ")" };
         }
@@ -267,7 +279,7 @@ namespace RemoteCodingTest
         {
             for (int i = 0; i < splitSums.Length; i++)
             {
-                if (Parentheses().Where(x => splitSums[i].Contains(x)).Count() == 2)
+                if (GetParentheses().Where(x => splitSums[i].Contains(x)).Count() == 2)
                 {
                     splitSums[i] = runCalculate(splitSums[i]).stringVal;
                 }
@@ -290,6 +302,16 @@ namespace RemoteCodingTest
             newSum = string.Join("", splitNewSum);
             newSum = newSum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
             return newSum;
+        }
+        
+        public static char[] GetOperators()
+        {
+            return new char[] { '+', '-', '*', '/' };
+        }
+
+        public static char[] GetUsedDelimiter()
+        {
+            return new char[] { '#', '@' };
         }
     }
 
