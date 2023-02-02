@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Net.NetworkInformation;
+using System.Runtime.CompilerServices;
 
 namespace RemoteCodingTest
 {
@@ -18,7 +19,7 @@ namespace RemoteCodingTest
             Console.WriteLine("Welcome to Calculating System");
             for (int i = 0; i < 10; i--)
             {
-                toSleep();
+                ToSleep();
                 Console.WriteLine("Please enter a calculation (eg 1 + 1): ");
                 inputCalc = Console.ReadLine();
 
@@ -37,7 +38,7 @@ namespace RemoteCodingTest
                 else
                 {
                     Console.WriteLine("The answer for " + inputCalc + " = " + Calculate(inputCalc));
-                    toSleep();
+                    ToSleep();
 
                 TryAgain:
                     Console.WriteLine("Do you want to try again? y/n");
@@ -47,15 +48,15 @@ namespace RemoteCodingTest
                         continue;
                     else if (options == "n")
                     {
-                        toSleep();
+                        ToSleep();
                         Console.WriteLine("Thank you for using Calculating System");
                         break;
                     }
                     else
                     {
-                        toSleep();
+                        ToSleep();
                         Console.WriteLine("Invalid Input");
-                        toSleep(1500);
+                        ToSleep(1500);
                         goto TryAgain;
                     }
                 }
@@ -99,173 +100,88 @@ namespace RemoteCodingTest
                         continue;
                     }
                 }
-                else if (newSum.Count(x => x == '*') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
+                else if (newSum.Count(x => x == '*') > 0 && newSum.Count(x => x == '/') == 0 && (newSum.Contains("+") || newSum.Contains("-")))
                 {
                     newSum = BodmasHandler(newSum, "*");
                     continue;
                 }
-                else if (newSum.Count(x => x == '/') == 1 && (newSum.Contains("+") || newSum.Contains("-")))
+                else if (newSum.Count(x => x == '/') > 0 && newSum.Count(x => x == '*') == 0 && (newSum.Contains("+") || newSum.Contains("-")))
                 {
                     newSum = BodmasHandler(newSum, "/");
+                    continue;
+                }
+                else if (newSum.Count(x => GetOperators(true).Contains(x)) > 0 && (newSum.Contains("+") || newSum.Contains("-")))
+                {
+                    newSum = BodmasHandler(newSum, GetOperators(true));
                     continue;
                 }
                 else
                     break;   
             }
-            var result = runCalculate(newSum);
+            var result = RunCalculate(newSum);
             return result.doubleVal;
         }
 
-        public static void toSleep(int? millisec = null)
+        public static void ToSleep(int? millisec = null)
         {
             int? interval = millisec == null ? 1000 : millisec;
             Console.WriteLine("Please Wait...");
             Thread.Sleep((int)interval);
         }
 
-        public static Calculation runCalculate(string subCalc)
+        public static Calculation RunCalculate(string subCalc)
         {
             double result = 0;
-            subCalc = subCalc.Replace("(", "").Replace(")", "").Replace("+", "@+@").Replace("-", "@-@").Replace("*", "@*@").Replace("/", "@/@");
-            var arrayCalc = subCalc.Split("@");
+            var arrayCalc = SplitByOperatorAndTrimBracket(subCalc);
             var calcLen = arrayCalc.Length;
-
-            if (calcLen == 3)
+            for (int i = 1; i < calcLen; i = i + 2)
             {
-                string oper = arrayCalc[1];
-                double a = Convert.ToDouble(arrayCalc[0]);
-                double b = Convert.ToDouble(arrayCalc[2]);
-                if (oper.Equals("+"))
+                string oper = arrayCalc[i];
+                double b = Convert.ToDouble(arrayCalc[i + 1]);
+                if (i == 1)
                 {
-                    result = a + b;
-                }
-                else if (oper.Equals("-"))
-                {
-                    result = a - b;
-                }
-                else if (oper.Equals("*"))
-                {
-                    result = a * b;
-                }
-                else if (oper.Equals("/"))
-                {
-                    result = a / b;
-                }
-                else
-                    throw new Exception("Operator not found");
-            }
-            else if (calcLen == 5)
-            {
-                string oper = arrayCalc[1];
-                string oper2 = arrayCalc[3].ToString();
-                double subResult = 0;
-                double a = Convert.ToDouble(arrayCalc[0]);
-                double b = Convert.ToDouble(arrayCalc[2]);
-                double c = Convert.ToDouble(arrayCalc[4]);
-                if (oper.Equals("+"))
-                {
-                    subResult = a + b;
-                }
-                else if (oper.Equals("-"))
-                {
-                    subResult = a - b;
-                }
-                else if (oper.Equals("*"))
-                {
-                    subResult = a * b;
-                }
-                else if (oper.Equals("/"))
-                {
-                    subResult = a / b;
+                    double a = Convert.ToDouble(arrayCalc[i - 1]);
+                    if (oper.Equals("+"))
+                    {
+                        result = a + b;
+                    }
+                    else if (oper.Equals("-"))
+                    {
+                        result = a - b;
+                    }
+                    else if (oper.Equals("*"))
+                    {
+                        result = a * b;
+                    }
+                    else if (oper.Equals("/"))
+                    {
+                        result = a / b;
+                    }
+                    else
+                        throw new Exception("Operator not found");
                 }
                 else
-                    throw new Exception("Operator not found");
+                {
+                    if (oper.Equals("+"))
+                    {
+                        result += b;
+                    }
+                    else if (oper.Equals("-"))
+                    {
+                        result -= b;
+                    }
+                    else if (oper.Equals("*"))
+                    {
+                        result *= b;
+                    }
+                    else if (oper.Equals("/"))
+                    {
+                        result /= b;
+                    }
+                    else
+                        throw new Exception("Operator not found");
+                }
 
-                if (oper2.Equals("+"))
-                {
-                    result = subResult + c;
-                }
-                else if (oper2.Equals("-"))
-                {
-                    result = subResult - c;
-                }
-                else if (oper2.Equals("*"))
-                {
-                    result = subResult * c;
-                }
-                else if (oper2.Equals("/"))
-                {
-                    result = subResult / c;
-                }
-                else
-                    throw new Exception("Operator not found");
-            }
-            else if (calcLen == 7)
-            {
-                string oper = arrayCalc[1];
-                string oper2 = arrayCalc[3];
-                string oper3 = arrayCalc[5];
-                double subResult = 0;
-                double a = Convert.ToDouble(arrayCalc[0]);
-                double b = Convert.ToDouble(arrayCalc[2]);
-                double c = Convert.ToDouble(arrayCalc[4]);
-                double d = Convert.ToDouble(arrayCalc[6]);
-                if (oper.Equals("+"))
-                {
-                    subResult = a + b;
-                }
-                else if (oper.Equals("-"))
-                {
-                    subResult = a - b;
-                }
-                else if (oper.Equals("*"))
-                {
-                    subResult = a * b;
-                }
-                else if (oper.Equals("/"))
-                {
-                    subResult = a / b;
-                }
-                else
-                    throw new Exception("Operator not found");
-
-                if (oper2.Equals("+"))
-                {
-                    subResult += c;
-                }
-                else if (oper2.Equals("-"))
-                {
-                    subResult -= c;
-                }
-                else if (oper2.Equals("*"))
-                {
-                    subResult *= c;
-                }
-                else if (oper2.Equals("/"))
-                {
-                    subResult /= c;
-                }
-                else
-                    throw new Exception("Operator not found");
-
-                if (oper3.Equals("+"))
-                {
-                    result = subResult + d;
-                }
-                else if (oper3.Equals("-"))
-                {
-                    result = subResult - d;
-                }
-                else if (oper3.Equals("*"))
-                {
-                    result = subResult * d;
-                }
-                else if (oper3.Equals("/"))
-                {
-                    result = subResult / d;
-                }
-                else
-                    throw new Exception("Operator not found");
             }
             return new Calculation { stringVal = result.ToString(), doubleVal = result };
         }
@@ -281,7 +197,7 @@ namespace RemoteCodingTest
             {
                 if (GetParentheses().Where(x => splitSums[i].Contains(x)).Count() == 2)
                 {
-                    splitSums[i] = runCalculate(splitSums[i]).stringVal;
+                    splitSums[i] = RunCalculate(splitSums[i]).stringVal;
                 }
             }
             return splitSums;
@@ -289,29 +205,97 @@ namespace RemoteCodingTest
 
         public static string BodmasHandler(string newSum, string op)
         {
-            var splitNewSum = newSum.ToCharArray().Select(x => x.ToString()).ToArray();
+            var splitNewSum = SplitByOperator(newSum);
 
-            for (int b = 0; b < splitNewSum.Length; b++)
+            if (newSum.Count(x => x.ToString() == op) > 1)
             {
-                if (splitNewSum[b].Equals(op))
+                var ListIndexOp = new List<int>();
+                for (int b = 0; b < splitNewSum.Length; b++)
                 {
-                    splitNewSum[b - 1] = "(" + splitNewSum[b - 1];
-                    splitNewSum[b + 1] = splitNewSum[b + 1] + ")";
+                    if (splitNewSum[b].Equals(op))
+                    {
+                        ListIndexOp.Add(b);
+                    }
+                }
+                var (FirstIndexOp, LastIndexOp) = OperatorsFirstAndLastIndex(ListIndexOp);
+
+                splitNewSum[FirstIndexOp - 1] = "(" + splitNewSum[FirstIndexOp - 1];
+                splitNewSum[LastIndexOp + 1] = splitNewSum[LastIndexOp + 1] + ")";
+            }
+            else
+            {
+                for (int b = 0; b < splitNewSum.Length; b++)
+                {
+                    if (splitNewSum[b].Equals(op))
+                    {
+                        splitNewSum[b - 1] = "(" + splitNewSum[b - 1];
+                        splitNewSum[b + 1] = splitNewSum[b + 1] + ")";
+                    }
                 }
             }
             newSum = string.Join("", splitNewSum);
             newSum = newSum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
             return newSum;
         }
-        
-        public static char[] GetOperators()
+
+        public static string BodmasHandler(string newSum, char[] op)
         {
-            return new char[] { '+', '-', '*', '/' };
+            var splitNewSum = SplitByOperator(newSum);
+
+            if (newSum.Count(x => op.Contains(x)) > 1)
+            {
+                var convertOp = op.Select(x => x.ToString()).ToArray();
+                var ListIndexOp = new List<int>();
+                for (int b = 0; b < splitNewSum.Length; b++)
+                {
+                    if (convertOp.Contains(splitNewSum[b]))
+                    {
+                        ListIndexOp.Add(b);
+                    }
+                }
+                var (FirstIndexOp, LastIndexOp) = OperatorsFirstAndLastIndex(ListIndexOp);
+
+                splitNewSum[FirstIndexOp - 1] = "(" + splitNewSum[FirstIndexOp - 1];
+                splitNewSum[LastIndexOp + 1] = splitNewSum[LastIndexOp + 1] + ")";
+            }
+            else
+            {
+                throw new Exception("Invalid Data");
+            }
+            newSum = string.Join("", splitNewSum);
+            newSum = newSum.Trim().Replace(" ", "").Replace("(", "#(").Replace(")", ")#");
+            return newSum;
+        }
+
+        public static char[] GetOperators(bool priority = false)
+        {
+            if (priority)
+                return new char[] { '*', '/' };
+            else
+                return new char[] { '+', '-', '*', '/' };
         }
 
         public static char[] GetUsedDelimiter()
         {
             return new char[] { '#', '@' };
+        }
+
+        public static (int, int) OperatorsFirstAndLastIndex(List<int> Input)
+        {
+            var FirstIndexOp = Input.Min();
+            var LastIndexOp = Input.Max();
+            return (FirstIndexOp, LastIndexOp);
+        }
+
+        public static string[] SplitByOperatorAndTrimBracket(string newSum)
+        {
+            newSum = newSum.Replace("(", "").Replace(")", "").Replace("+", "@+@").Replace("-", "@-@").Replace("*", "@*@").Replace("/", "@/@");
+            return newSum.Split("@");
+        }
+        public static string[] SplitByOperator(string newSum)
+        {
+            newSum = newSum.Replace("+", "@+@").Replace("-", "@-@").Replace("*", "@*@").Replace("/", "@/@");
+            return newSum.Split("@");
         }
     }
 
